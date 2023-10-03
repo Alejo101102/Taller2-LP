@@ -30,6 +30,30 @@
 ;<literal> ::= <variable>
 ;<variable> ::= <int>
 
+;; Implementacion de ambientes (codigo de clase)
+;; empty-env
+(define empty-env
+  (lambda () (list 'empty-env)))
+
+;; extend-env
+(define extend-env
+  (lambda (var val env)
+    (list 'extend-env var val env)))
+
+;; apply-env
+(define apply-env
+  (lambda (env search-var)
+    (cond ((eqv? (car env) 'empty-env)
+           (eopl:error 'apply-env "No binding for ~s" search-var))
+          ((eqv? (car env) 'extend-env)
+           (let ((saved-var (cadr env))
+                 (saved-val (caddr env))
+                 (saved-env (cadddr env)))
+             (if (eqv? search-var saved-var)
+                 saved-val
+                 (apply-env saved-env search-var))))
+          (else (eopl:error 'apply-env "Expecting an environment, given ~s" env)))))
+
 ;Función auxiliar para determinar el tamaño de una lista
 (define (longitud-lista lst)
   (if (null? lst)
@@ -49,7 +73,6 @@
     ))
 
 ;Implementacion por listas (falta documentación)
-
 (define (crear-FNC numero-variables expresion)
   (list 'FNC numero-variables expresion))
 
@@ -212,8 +235,6 @@
 
 ; Implementación con datatype
 ; Falta documentación y resolver conjunción y disyunción
-
-
 (define-datatype expresion-FNC expresion-FNC?
   (FNC (numero-variables number?)(expr expresion?))
   )
@@ -266,11 +287,6 @@
           (lit (numero 2)))))))
 
 ;; 3) Evaluador ;; En Desarrollo
-;;
-;; Incoherencias:
-;; > -1 and -2 returns '(satisfactible (#f #t))
-;; > -1 and -2 and -3 returns '(satisfactible (#f #t #t))
-;; > -1 and 1 retunrs '(satisfactible (#f))
 (define (EVALUARSAT FNC)
   (let ((solucion (explorar-solucion FNC (obtener-numero-variables FNC) '())))
     (if (null? solucion)
@@ -282,27 +298,22 @@
       (if (evaluar-FNC FNC asignacion-actual)
           asignacion-actual
           '())
-      (let ((variable-actual (longitud-lista asignacion-actual)))
-        (let (
-              (asignacion-true (cons-end asignacion-actual (list #t)))
-              (asignacion-false (cons-end asignacion-actual (list #f))))
-          (letrec (
-                   (solucion-true (explorar-solucion FNC num-variables asignacion-true))
-                   (solucion-false (explorar-solucion FNC num-variables asignacion-false)))
-            (if (not (null? solucion-true))
-                solucion-true
-                solucion-false))))))
-
+      (let (
+            (asignacion-true (cons-end asignacion-actual (list #t)))
+            (asignacion-false (cons-end asignacion-actual (list #f))))
+        (letrec (
+                 (solucion-true (explorar-solucion FNC num-variables asignacion-true))
+                 (solucion-false (explorar-solucion FNC num-variables asignacion-false)))
+          (if (not (null? solucion-true))
+              solucion-true
+              solucion-false)
+          )
+        )
+      )
+  )
 
 (define (evaluar-FNC FNC asignacion)
-  (letrec ((expresion (obtener-expresion FNC)))
-    #| Desarrollador
-    (display "\n\n Soy evaluar-FNC \n")
-    (display "Expresion es: --> ") (display expresion)
-    (display "\n")
-    (display "Asignacion es: --> ") (display asignacion)
-    (display "\n")
-    |#
+  (let ((expresion (obtener-expresion FNC)))
     (evaluar-expresion expresion asignacion)
     ))
 
@@ -421,7 +432,7 @@
              (crear-expresion
               (crear-clausula-final
                (crear-literal
-                (crear-variable 1)))
+                (crear-variable -1)))
 
               (crear-conjuncion)
 
@@ -453,16 +464,6 @@
                )
               )))
 
-;; Uso
-; (EVALUARSAT basicFNC)
-
-#|
-(EVALUARSAT basicFNC)
-(EVALUARSAT basicFNC1)
-(EVALUARSAT basicFNC2)
-|#
-
-#| |#
 (display "\n")
 ;; x
 (display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n") ;; (satisfactible (#t))
