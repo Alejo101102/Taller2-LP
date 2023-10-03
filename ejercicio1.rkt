@@ -43,6 +43,11 @@
       (else (cons (car lista)
                   (cons-end (cdr lista) elemento))))))
 
+(define negar
+  (lambda (valor-booleano)
+    (if (eqv? valor-booleano #t) #f #t)
+    ))
+
 ;Implementacion por listas (falta documentación)
 
 (define (crear-FNC numero-variables expresion)
@@ -257,7 +262,12 @@
          (clausula-final
           (lit (numero 2)))))))
 
-;; 3) Evaluador
+;; 3) Evaluador ;; En Desarrollo
+;;
+;; Incoherencias:
+;; > -1 and -2 returns '(satisfactible (#f #t))
+;; > -1 and -2 and -3 returns '(satisfactible (#f #t #t))
+;; > -1 and 1 retunrs '(satisfactible (#f))
 (define (EVALUARSAT FNC)
   (let ((solucion (explorar-solucion FNC (obtener-numero-variables FNC) '())))
     (if (null? solucion)
@@ -280,44 +290,78 @@
                 solucion-true
                 solucion-false))))))
 
+
 (define (evaluar-FNC FNC asignacion)
   (letrec ((expresion (obtener-expresion FNC)))
+    #| Desarrollador
+    (display "\n\n Soy evaluar-FNC \n")
     (display "Expresion es: --> ") (display expresion)
     (display "\n")
     (display "Asignacion es: --> ") (display asignacion)
     (display "\n")
-    ;; (evaluar-expresion expresion asignacion) ;; Esto explota :(
+    |#
+    (evaluar-expresion expresion asignacion)
     ))
 
 (define (evaluar-expresion expresion asignacion)
+  #| Desarrollador |#
+  (display "\n\n Soy evaluar-expresion \n")
+  (display "Expresion es: --> ") (display expresion)
+  (display "\n")
+  (display "Asignacion es: --> ") (display asignacion)
+  (display "\n")
+
   (cond
     ((es-expresion-final? expresion)
      (evaluar-clausula (obtener-clausula expresion) asignacion))
-    ((not (es-expresion-final? expresion))
-     (and (evaluar-clausula (obtener-clausula expresion) asignacion)
-          (evaluar-expresion (obtener-expresion expresion) asignacion)))
+    ((es-expresion? expresion)
+     (cond
+       ((es-conjuncion? (caddr expresion))
+        (and (evaluar-clausula (obtener-clausula expresion) asignacion)
+             (evaluar-expresion (obtener-expresion expresion) asignacion)))
+       ((es-disyuncion? (caddr expresion))
+        (or (evaluar-clausula (obtener-clausula expresion) asignacion)
+            (evaluar-expresion (obtener-expresion expresion) asignacion))))
+     )
     (else
      (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
 
 (define (evaluar-clausula clausula asignacion)
+  #| Desarrollador |#
+  (display "\n\n Soy evaluar-clausula \n")
+  (display "Clausula es: --> ") (display clausula)
+  (display "\n")
+  (display "Asignacion es: --> ") (display asignacion)
+  (display "\n")
+  (display "Literal es: --> ") (display (obtener-literal clausula))
+  (display "\n")
+
   (cond
     ((es-clausula-final? clausula)
      (evaluar-literal (obtener-literal clausula) asignacion))
-    ((not (es-clausula-final? clausula))
-     (or (evaluar-literal (obtener-literal clausula) asignacion)
-         (evaluar-clausula (obtener-clausula clausula) asignacion)))
+    ((es-clausula? clausula)
+     (cond
+       ((es-conjuncion? (caddr clausula))
+        (and (evaluar-literal (obtener-literal clausula) asignacion)
+             (evaluar-clausula (obtener-clausula clausula) asignacion)))
+       ((es-disyuncion? (caddr clausula))
+        (or (evaluar-literal (obtener-literal clausula) asignacion)
+            (evaluar-clausula (obtener-clausula clausula) asignacion))))
+     )
     (else
      (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula))))
 
 (define (evaluar-literal literal asignacion)
   (let ((variable (obtener-variable literal)))
-    (if (variable? variable)
-        (if (eq? (car asignacion) variable)
-            (cdr asignacion)
-            (evaluar-literal literal (cdr asignacion)))
-        (eopl:error 'evaluar-literal "Entrada no válida: se esperaba un literal, se recibió ~s" literal))))
+    (let ((valor (obtener-numero variable)))
+      (if (es-variable? variable)
+          (if (< valor 0)
+              (negar (car asignacion))
+              (car asignacion))
 
+          (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
 
+;; Juego con gramática
 (obtener-numero
  (obtener-variable
   (obtener-literal
@@ -325,7 +369,7 @@
     (crear-expresion-final
      (crear-clausula-final
       (crear-literal
-       (crear-variable 3)
+       (crear-variable -3)
        )
       )
      )
@@ -334,15 +378,65 @@
   )
  )
 
-;; Rata de laboratorio
-(define basicFNC
+;; Conejillos de indias
+(define basicFNC ; x
   (crear-FNC 1
              (crear-expresion-final
               (crear-clausula-final
                (crear-literal
                 (crear-variable 3))))))
 
+(define basicFNC1 ; x and y
+  (crear-FNC 2
+             (crear-expresion
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable -2)))
+
+              (crear-conjuncion)
+
+              (crear-expresion-final
+               (crear-clausula-final
+                (crear-literal
+                 (crear-variable -1)))))))
+
+
+(define basicFNC2 ; x and y and z
+  (crear-FNC 3
+             (crear-expresion
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable 1)))
+
+              (crear-conjuncion)
+
+              (crear-expresion
+               (crear-clausula-final
+                (crear-literal
+                 (crear-variable -2)))
+
+               (crear-conjuncion)
+
+               (crear-expresion-final
+                (crear-clausula-final
+                 (crear-literal
+                  (crear-variable -3))))))))
+
+(define basicFNC3 ;; -x and x
+  (crear-FNC 1
+             (crear-expresion
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable -1)))
+
+              (crear-conjuncion)
+
+              (crear-expresion-final
+               (crear-clausula-final
+                (crear-literal
+                 (crear-variable 1)))
+               )
+              )))
+
 ;; Uso
 ; (EVALUARSAT basicFNC)
-
-
