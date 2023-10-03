@@ -304,12 +304,13 @@
     ))
 
 (define (evaluar-expresion expresion asignacion)
-  #| Desarrollador |#
+  #| Desarrollador
   (display "\n\n Soy evaluar-expresion \n")
   (display "Expresion es: --> ") (display expresion)
   (display "\n")
   (display "Asignacion es: --> ") (display asignacion)
   (display "\n")
+  |#
 
   (cond
     ((es-expresion-final? expresion)
@@ -317,9 +318,10 @@
     ((es-expresion? expresion)
      (cond
        ((es-conjuncion? (caddr expresion))
-        (and (evaluar-clausula (obtener-clausula expresion) asignacion)
-             (evaluar-expresion (obtener-expresion expresion) asignacion)))
-       ((es-disyuncion? (caddr expresion))
+        (
+         (and (evaluar-clausula (obtener-clausula expresion) asignacion)
+              (evaluar-expresion (obtener-expresion expresion) asignacion)))
+        ((es-disyuncion? (caddr expresion)))
         (or (evaluar-clausula (obtener-clausula expresion) asignacion)
             (evaluar-expresion (obtener-expresion expresion) asignacion))))
      )
@@ -335,6 +337,7 @@
   (display "\n")
   (display "Literal es: --> ") (display (obtener-literal clausula))
   (display "\n")
+
 
   (cond
     ((es-clausula-final? clausula)
@@ -384,7 +387,7 @@
              (crear-expresion-final
               (crear-clausula-final
                (crear-literal
-                (crear-variable 3))))))
+                (crear-variable -3))))))
 
 (define basicFNC1 ; x and y
   (crear-FNC 2
@@ -440,3 +443,7 @@
 
 ;; Uso
 ; (EVALUARSAT basicFNC)
+
+(display "basicFNC: ") (display (EVALUARSAT basicFNC)) (display "\n\n")
+(display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n")
+(display "basicFNC2: ") (display (EVALUARSAT basicFNC2)) (display "\n\n")
