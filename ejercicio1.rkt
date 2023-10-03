@@ -372,37 +372,41 @@
 
           (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
 
-;; Juego con gramática
-(obtener-numero
- (obtener-variable
-  (obtener-literal
-   (obtener-clausula
-    (crear-expresion-final
-     (crear-clausula-final
-      (crear-literal
-       (crear-variable -3)
-       )
-      )
-     )
-    )
-   )
-  )
- )
-
 ;; Conejillos de indias
-(define basicFNC ; x
+(define basicFNC1 ; x
+  (crear-FNC 1
+             (crear-expresion-final
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable 3))))))
+
+(define basicFNC1-1 ; -x
   (crear-FNC 1
              (crear-expresion-final
               (crear-clausula-final
                (crear-literal
                 (crear-variable -3))))))
 
-(define basicFNC1 ; x and y
+(define basicFNC2-1 ; x and y
   (crear-FNC 2
              (crear-expresion
               (crear-clausula-final
                (crear-literal
-                (crear-variable -2)))
+                (crear-variable 2)))
+
+              (crear-conjuncion)
+
+              (crear-expresion-final
+               (crear-clausula-final
+                (crear-literal
+                 (crear-variable 1)))))))
+
+(define basicFNC2-2 ; x and -y
+  (crear-FNC 2
+             (crear-expresion
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable 2)))
 
               (crear-conjuncion)
 
@@ -412,7 +416,7 @@
                  (crear-variable -1)))))))
 
 
-(define basicFNC2 ; x and y and z
+(define basicFNC3 ; x and y and z
   (crear-FNC 3
              (crear-expresion
               (crear-clausula-final
@@ -433,7 +437,7 @@
                  (crear-literal
                   (crear-variable -3))))))))
 
-(define basicFNC3 ;; -x and x
+(define basicFNC1-0 ;; -x and x
   (crear-FNC 1
              (crear-expresion
               (crear-clausula-final
@@ -459,6 +463,16 @@
 |#
 
 #| |#
-(display "basicFNC: ") (display (EVALUARSAT basicFNC)) (display "\n\n")
-(display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n")
-(display "basicFNC2: ") (display (EVALUARSAT basicFNC2)) (display "\n\n")
+(display "\n")
+;; x
+(display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n") ;; (satisfactible (#t))
+;; -x
+(display "basicFNC1-1: ") (display (EVALUARSAT basicFNC1-1)) (display "\n\n") ;; (satisfactible (#f))
+;; -x and x
+(display "basicFNC1-0: ") (display (EVALUARSAT basicFNC1-0)) (display "\n\n") ;; (insatisfactible ())
+;; x and y
+(display "basicFNC2-1: ") (display (EVALUARSAT basicFNC2-1)) (display "\n\n") ;; (satisfactible (#t #t))
+;; x and -y
+(display "basicFNC2-2: ") (display (EVALUARSAT basicFNC2-2)) (display "\n\n") ;; (satisfactible (#t #f))
+;; x and y and z
+(display "basicFNC3: ") (display (EVALUARSAT basicFNC3)) (display "\n\n") ;; (satisfactible (#t #t #t))
