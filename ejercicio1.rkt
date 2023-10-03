@@ -124,19 +124,12 @@
       (caddr FNC)
       (eopl:error 'obtener-expresion "Expecting BNF expression, given ~s" FNC)))
 
-(define (obtener-expresion-interna FNC)
-  (if (es-FNC? FNC)
-      (cadddr (caddr FNC))
-      (eopl:error 'obtener-expresion "Expecting BNF expression, given ~s" FNC)))
+(define (obtener-expresion-interna expresion)
+  (cadddr expresion))
 
 (define (obtener-clausula expresion)
   (if (or (es-expresion-final? expresion) (es-expresion? expresion))
       (cadr expresion)
-      (eopl:error 'obtener-clausula "Expecting expression, given ~s" expresion)))
-
-(define (obtener-clausula-interna expresion)
-  (if (or (es-expresion-final? expresion) (es-expresion? expresion))
-      (cadddr (cadr expresion))
       (eopl:error 'obtener-clausula "Expecting expression, given ~s" expresion)))
 
 (define (obtener-literal clausula)
@@ -320,23 +313,25 @@
   (display "\n")
   (display "Asignacion es: --> ") (display asignacion)
   (display "\n")
-  |#
+   |#
 
   (cond
     ((es-expresion-final? expresion)
-     (evaluar-clausula (obtener-clausula expresion) asignacion))
+     (evaluar-clausula (obtener-clausula expresion) asignacion)
+     )
     ((es-expresion? expresion)
      (cond
        ((es-conjuncion? (caddr expresion))
         (
-         #| DESARROLLADOR |#
-         (display "\n Conjuncion detectada! ")
-         (and (evaluar-clausula (obtener-clausula expresion) asignacion)
-              (evaluar-expresion (obtener-expresion expresion) asignacion)))
-        ((es-disyuncion? (caddr expresion)))
-        (or (evaluar-clausula (obtener-clausula expresion) asignacion)
-            (evaluar-expresion (obtener-expresion expresion) asignacion))))
-     )
+         and (evaluar-clausula (obtener-clausula expresion) asignacion)
+             (evaluar-expresion (obtener-expresion-interna expresion) asignacion)
+             ))
+       ((es-disyuncion? (caddr expresion))
+        (
+         or (evaluar-clausula (obtener-clausula expresion) asignacion)
+            (evaluar-expresion (obtener-expresion-interna expresion) asignacion)
+            ))
+       ))
     (else
      (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
 
@@ -364,7 +359,8 @@
             (evaluar-clausula (obtener-clausula clausula) asignacion))))
      )
     (else
-     (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula))))
+     (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula)))
+  )
 
 (define (evaluar-literal literal asignacion)
   (let ((variable (obtener-variable literal)))
@@ -457,7 +453,12 @@
 ; (EVALUARSAT basicFNC)
 
 #|
+(EVALUARSAT basicFNC)
+(EVALUARSAT basicFNC1)
+(EVALUARSAT basicFNC2)
+|#
+
+#| |#
 (display "basicFNC: ") (display (EVALUARSAT basicFNC)) (display "\n\n")
 (display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n")
 (display "basicFNC2: ") (display (EVALUARSAT basicFNC2)) (display "\n\n")
-|#
