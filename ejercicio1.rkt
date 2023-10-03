@@ -54,13 +54,13 @@
   (list 'FNC numero-variables expresion))
 
 (define (crear-expresion-final clausula)
-  (list 'expresion clausula))
+  (list 'expresion-final clausula))
 
 (define (crear-expresion clausula conjuncion expresion)
   (list 'expresion clausula conjuncion expresion)  )
 
 (define (crear-clausula-final literal)
-  (list 'clausula literal))
+  (list 'clausula-final literal))
 
 (define (crear-clausula literal disyuncion clausula)
   (list 'clausula literal disyuncion clausula))
@@ -84,7 +84,7 @@
        (number? (cadr FNC))))
 
 (define (es-expresion-final? expresion)
-  (and (list? expresion) (eq? 'expresion (car expresion)) (= (longitud-lista expresion) 2)))
+  (and (list? expresion) (eq? 'expresion-final (car expresion))))
 
 (define (es-expresion? expresion)
   (and (list? expresion)
@@ -92,7 +92,7 @@
        (eq? 'and (caddr expresion))))
 
 (define (es-clausula-final? clausula)
-  (and (list? clausula) (eq? 'clausula (car clausula))(= (longitud-lista clausula) 2)))
+  (and (list? clausula) (eq? 'clausula-final (car clausula))))
 
 (define (es-clausula? clausula)
   (and (list? clausula)
@@ -124,25 +124,35 @@
       (caddr FNC)
       (eopl:error 'obtener-expresion "Expecting BNF expression, given ~s" FNC)))
 
+(define (obtener-expresion-interna FNC)
+  (if (es-FNC? FNC)
+      (cadddr (caddr FNC))
+      (eopl:error 'obtener-expresion "Expecting BNF expression, given ~s" FNC)))
+
 (define (obtener-clausula expresion)
   (if (or (es-expresion-final? expresion) (es-expresion? expresion))
       (cadr expresion)
       (eopl:error 'obtener-clausula "Expecting expression, given ~s" expresion)))
 
+(define (obtener-clausula-interna expresion)
+  (if (or (es-expresion-final? expresion) (es-expresion? expresion))
+      (cadddr (cadr expresion))
+      (eopl:error 'obtener-clausula "Expecting expression, given ~s" expresion)))
+
 (define (obtener-literal clausula)
   (if (or (es-clausula-final? clausula) (es-clausula? clausula))
       (cadr clausula)
-      (eopl:error 'obtener-literal "Expecting clausula, given ~s" clausula)))
+      (eopl:error 'obtener-literal "Expecting expression, given ~s" clausula)))
 
 (define (obtener-variable literal)
   (if (es-literal? literal)
       (cadr literal)
-      (eopl:error 'obtener-variable "Expecting literal, given ~s" literal)))
+      (eopl:error 'obtener-variable "Expecting expression, given ~s" literal)))
 
 (define (obtener-numero variable)
   (if (es-variable? variable)
       (cadr variable)
-      (eopl:error 'obtener-numero "Expecting variable, given ~s" variable)))
+      (eopl:error 'obtener-numero "Expecting expression, given ~s" variable)))
 
 ; Ejemplos de instancias SAT
 (define expresion-1 ; 0
@@ -319,6 +329,8 @@
      (cond
        ((es-conjuncion? (caddr expresion))
         (
+         #| DESARROLLADOR |#
+         (display "\n Conjuncion detectada! ")
          (and (evaluar-clausula (obtener-clausula expresion) asignacion)
               (evaluar-expresion (obtener-expresion expresion) asignacion)))
         ((es-disyuncion? (caddr expresion)))
@@ -329,7 +341,7 @@
      (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
 
 (define (evaluar-clausula clausula asignacion)
-  #| Desarrollador |#
+  #| Desarrollador
   (display "\n\n Soy evaluar-clausula \n")
   (display "Clausula es: --> ") (display clausula)
   (display "\n")
@@ -337,7 +349,7 @@
   (display "\n")
   (display "Literal es: --> ") (display (obtener-literal clausula))
   (display "\n")
-
+  |#
 
   (cond
     ((es-clausula-final? clausula)
@@ -444,6 +456,8 @@
 ;; Uso
 ; (EVALUARSAT basicFNC)
 
+#|
 (display "basicFNC: ") (display (EVALUARSAT basicFNC)) (display "\n\n")
 (display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n")
 (display "basicFNC2: ") (display (EVALUARSAT basicFNC2)) (display "\n\n")
+|#
