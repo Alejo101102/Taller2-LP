@@ -72,7 +72,7 @@
        (number? (cadr FNC))))
 
 (define (es-expresion-final? expresion)
-  (and (list? expresion) (eq? 'expresion (car expresion))))
+  (and (list? expresion) (eq? 'expresion (car expresion)) (= (longitud-lista expresion) 2)))
 
 (define (es-expresion? expresion)
   (and (list? expresion)
@@ -80,7 +80,7 @@
        (eq? 'and (caddr expresion))))
 
 (define (es-clausula-final? clausula)
-  (and (list? clausula) (eq? 'clausula (car clausula))))
+  (and (list? clausula) (eq? 'clausula (car clausula))(= (longitud-lista clausula) 2)))
 
 (define (es-clausula? clausula)
   (and (list? clausula)
@@ -117,17 +117,17 @@
 (define (obtener-literal clausula)
   (if (or (es-clausula-final? clausula) (es-clausula? clausula))
       (cadr clausula)
-      (eopl:error 'obtener-literal "Expecting expression, given ~s" clausula)))
+      (eopl:error 'obtener-literal "Expecting clausula, given ~s" clausula)))
 
 (define (obtener-variable literal)
   (if (es-literal? literal)
       (cadr literal)
-      (eopl:error 'obtener-variable "Expecting expression, given ~s" literal)))
+      (eopl:error 'obtener-variable "Expecting literal, given ~s" literal)))
 
 (define (obtener-numero variable)
   (if (es-variable? variable)
       (cadr variable)
-      (eopl:error 'obtener-numero "Expecting expression, given ~s" variable)))
+      (eopl:error 'obtener-numero "Expecting variable, given ~s" variable)))
 
 ; Ejemplos de instancias SAT
 (define expresion-1 ; 0
