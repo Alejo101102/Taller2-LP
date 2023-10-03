@@ -5,7 +5,7 @@
 
 
 ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
-;; INTEGRANTES 
+;; INTEGRANTES
 ; Alejandro Guerrero Cano (2179652)- Alejo101102
 ; alejandro.cano@correounivalle.edu.co
 
@@ -36,16 +36,23 @@
       0
       (+ 1 (longitud-lista (cdr lst)))))
 
+(define cons-end
+  (lambda (lista elemento)
+    (cond
+      ((null? lista) elemento)
+      (else (cons (car lista)
+                  (cons-end (cdr lista) elemento))))))
+
 ;Implementacion por listas (falta documentación)
 
 (define (crear-FNC numero-variables expresion)
   (list 'FNC numero-variables expresion))
- 
+
 (define (crear-expresion-final clausula)
   (list 'expresion clausula))
 
 (define (crear-expresion clausula conjuncion expresion)
-(list 'expresion clausula conjuncion expresion)  )
+  (list 'expresion clausula conjuncion expresion)  )
 
 (define (crear-clausula-final literal)
   (list 'clausula literal))
@@ -99,6 +106,9 @@
 (define (es-disyuncion? expr)
   (eq? expr 'or))
 
+(define (es-numero? expr)
+  (number? expr))
+
 (define (obtener-numero-variables FNC)
   (if (es-FNC? FNC)
       (cadr FNC)
@@ -151,41 +161,45 @@
 
 (define expresion-FNC-e ; 1 and 2 and 3
   (crear-FNC 3
-    (crear-expresion
-      (crear-clausula-final
-        (crear-literal
-          (crear-variable 1)))
-      (crear-conjuncion)
-      (crear-expresion
-        (crear-clausula-final
-          (crear-literal
-            (crear-variable 2)))
-        (crear-conjuncion)
-        (crear-expresion-final
-          (crear-clausula-final
-            (crear-literal
-              (crear-variable 3))))))))
+             (crear-expresion
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable 1)))
+
+              (crear-conjuncion)
+
+              (crear-expresion
+               (crear-clausula-final
+                (crear-literal
+                 (crear-variable 2)))
+
+               (crear-conjuncion)
+
+               (crear-expresion-final
+                (crear-clausula-final
+                 (crear-literal
+                  (crear-variable 3))))))))
 
 (define expresion-FNC-2 ; 1 and 2 and (3 or 4)
   (crear-FNC 4 ; Supongamos que 4 es el número que deseas
-    (crear-expresion
-      (crear-clausula-final
-        (crear-literal
-          (crear-variable 1)))
-      (crear-conjuncion)
-      (crear-expresion
-        (crear-clausula-final
-          (crear-literal
-            (crear-variable 2)))
-        (crear-conjuncion)
-        (crear-expresion-final
-          (crear-clausula
-            (crear-literal
-              (crear-variable 3))
-            (crear-disyuncion)
-            (crear-clausula-final
-             (crear-literal
-             (crear-variable 4)))))))))
+             (crear-expresion
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable 1)))
+              (crear-conjuncion)
+              (crear-expresion
+               (crear-clausula-final
+                (crear-literal
+                 (crear-variable 2)))
+               (crear-conjuncion)
+               (crear-expresion-final
+                (crear-clausula
+                 (crear-literal
+                  (crear-variable 3))
+                 (crear-disyuncion)
+                 (crear-clausula-final
+                  (crear-literal
+                   (crear-variable 4)))))))))
 
 
 ; Implementación con datatype
@@ -194,35 +208,35 @@
 
 (define-datatype expresion-FNC expresion-FNC?
   (FNC (numero-variables number?)(expr expresion?))
-)
+  )
 
 (define-datatype expresion expresion?
   (expresion-final (clausula clausula?))
   (expresion-no-final (clausula clausula?)
                       (expresion expresion?))
-)
+  )
 
 (define-datatype clausula clausula?
   (clausula-final (literal literal?))
   (clausula-no-final (literal literal?)
-                    (clausula clausula?))
-)
+                     (clausula clausula?))
+  )
 
 (define-datatype literal literal?
   (lit (variable variable?))
-)
+  )
 
 (define-datatype variable variable?
   (numero (num number?))
-)
+  )
 
 (define conjuncion?
   (list 'and)
-)
+  )
 
 (define disyuncion?
   (list 'or)
-)
+  )
 
 (define expr-sat-1 ; 6
   (FNC 1
@@ -242,5 +256,93 @@
         (expresion-final
          (clausula-final
           (lit (numero 2)))))))
+
+;; 3) Evaluador
+(define (EVALUARSAT FNC)
+  (let ((solucion (explorar-solucion FNC (obtener-numero-variables FNC) '())))
+    (if (null? solucion)
+        (list 'insatisfactible '())
+        (list 'satisfactible solucion))))
+
+(define (explorar-solucion FNC num-variables asignacion-actual)
+  (if (= (longitud-lista asignacion-actual) num-variables)
+      (if (evaluar-FNC FNC asignacion-actual)
+          asignacion-actual
+          '())
+      (let ((variable-actual (longitud-lista asignacion-actual)))
+        (let (
+              (asignacion-true (cons-end asignacion-actual (list #t)))
+              (asignacion-false (cons-end asignacion-actual (list #f))))
+          (letrec (
+                   (solucion-true (explorar-solucion FNC num-variables asignacion-true))
+                   (solucion-false (explorar-solucion FNC num-variables asignacion-false)))
+            (if (not (null? solucion-true))
+                solucion-true
+                solucion-false))))))
+
+(define (evaluar-FNC FNC asignacion)
+  (letrec ((expresion (obtener-expresion FNC)))
+    (display "Expresion es: --> ") (display expresion)
+    (display "\n")
+    (display "Asignacion es: --> ") (display asignacion)
+    (display "\n")
+    ;; (evaluar-expresion expresion asignacion) ;; Esto explota :(
+    ))
+
+(define (evaluar-expresion expresion asignacion)
+  (cond
+    ((es-expresion-final? expresion)
+     (evaluar-clausula (obtener-clausula expresion) asignacion))
+    ((not (es-expresion-final? expresion))
+     (and (evaluar-clausula (obtener-clausula expresion) asignacion)
+          (evaluar-expresion (obtener-expresion expresion) asignacion)))
+    (else
+     (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
+
+(define (evaluar-clausula clausula asignacion)
+  (cond
+    ((es-clausula-final? clausula)
+     (evaluar-literal (obtener-literal clausula) asignacion))
+    ((not (es-clausula-final? clausula))
+     (or (evaluar-literal (obtener-literal clausula) asignacion)
+         (evaluar-clausula (obtener-clausula clausula) asignacion)))
+    (else
+     (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula))))
+
+(define (evaluar-literal literal asignacion)
+  (let ((variable (obtener-variable literal)))
+    (if (variable? variable)
+        (if (eq? (car asignacion) variable)
+            (cdr asignacion)
+            (evaluar-literal literal (cdr asignacion)))
+        (eopl:error 'evaluar-literal "Entrada no válida: se esperaba un literal, se recibió ~s" literal))))
+
+
+(obtener-numero
+ (obtener-variable
+  (obtener-literal
+   (obtener-clausula
+    (crear-expresion-final
+     (crear-clausula-final
+      (crear-literal
+       (crear-variable 3)
+       )
+      )
+     )
+    )
+   )
+  )
+ )
+
+;; Rata de laboratorio
+(define basicFNC
+  (crear-FNC 1
+             (crear-expresion-final
+              (crear-clausula-final
+               (crear-literal
+                (crear-variable 3))))))
+
+;; Uso
+; (EVALUARSAT basicFNC)
 
 
