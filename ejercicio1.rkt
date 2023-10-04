@@ -39,6 +39,10 @@
 (define empty-env
   (lambda () (list 'empty-env)))
 
+;; Caso de prueba 1: Llamada a la función empty-env
+(empty-env) ;; Resultado esperado: (list 'empty-env)
+
+
 ;; extend-env
 ;; Esta función extiende un entorno existente agregando una nueva
 ;; asociación entre una variable (var) y su valor (val).
@@ -48,6 +52,12 @@
 (define extend-env
   (lambda (var val env)
     (list 'extend-env var val env)))
+
+;; Caso de prueba 1: Extender un entorno vacío con una asociación
+(extend-env 'x 42 'empty-env) ;; Resultado esperado: (extend-env 'x 42 'empty-env)
+;; Caso de prueba 2: Extender un entorno existente con una nueva asociación
+(extend-env 'y 100 (extend-env 'x 42 'empty-env)) ;; Resultado esperado: (extend-env 'y 100 (extend-env 'x 42 'empty-env))
+
 
 ;; apply-env
 ;; Esta función busca una variable (search-var) en un entorno dado
@@ -69,6 +79,14 @@
                  (apply-env saved-env search-var))))
           (else (eopl:error 'apply-env "Expecting an environment, given ~s" env)))))
 
+;; Caso de prueba 1: Búsqueda exitosa en un entorno vacío
+;;(apply-env (empty-env) 'x) ;; Resultado esperado: Error (No binding for x)
+;; Caso de prueba 2: Búsqueda exitosa en un entorno extendido
+(apply-env
+ (extend-env 'y 42
+             (empty-env)) 'y) ;; Resultado esperado: 42
+
+
 ;; cons-end
 ;; Esta función agrega un elemento (elemento) al final de una lista (lista) dada.
 ;; Se utiliza para construir nuevas listas agregando un elemento
@@ -79,6 +97,12 @@
     ((null? lista) elemento)
     (else (cons (car lista)
                 (cons-end (cdr lista) elemento)))))
+
+; Caso de prueba 1: Agregar un elemento a una lista vacía
+(cons-end '() 42) ;; '(42).
+; Caso de prueba 2: Agregar un elemento al final de una lista existente
+(cons-end '(1 2 3) 4) ;; '(1 2 3 4).
+
 
 ;; longitud-lista
 ;; La función longitud-lista calcula la longitud (cantidad de elementos)
@@ -92,6 +116,12 @@
       0
       (+ 1 (longitud-lista (cdr lst)))))
 
+; Caso de prueba 1: Lista vacía
+(longitud-lista '()) ;; Resultado esperado: 0
+; Caso de prueba 2: Lista con elementos
+(longitud-lista '(1 2 3 4 5)) ;; Resultado esperado: 5
+
+
 ;; negar
 ;; La función negar toma un valor booleano como entrada y devuelve el valor booleano
 ;; negado. Si el valor de entrada es #t, la función devuelve #f, y si el valor de entrada
@@ -100,6 +130,12 @@
 (define negar
   (lambda (valor-booleano)
     (if (eqv? valor-booleano #t) #f #t)))
+
+;; Caso de prueba 1: Valor booleano verdadero
+(negar #t) ;; Resultado esperado: #f
+;; Caso de prueba 2: Valor booleano falso
+(negar #f) ;; Resultado esperado: #t
+
 
 ;Implementacion por listas (falta documentación)
 (define (crear-FNC numero-variables expresion)
@@ -424,6 +460,11 @@
       ((list? (car L)) (up-aux (up (car L)) (up (cdr L))))
       (else (cons (car L) (up (cdr L))))))
 
+  ;; Caso de prueba 1: Lista vacía
+  (up '()) ;; Resultado esperado: '()
+  ;; Caso de prueba 2: Lista con elementos anidados
+  (up '(1 (2 (3) 4) 5)) ;; Resultado esperado: '(1 2 3 4 5)
+
   ;; limpiar-lista
   ;; La función limpiar-lista recibe una lista de números
   ;; realiza varias operaciones en ella y devuelve una nueva
@@ -445,6 +486,12 @@
     (define (valor-absoluto num)
       (if (< num 0) (- num) num))
 
+    ;; Caso de prueba 1: Número positivo
+    (valor-absoluto 5) ;; Resultado esperado: 5
+    ;; Caso de prueba 2: Número negativo
+    (valor-absoluto -7) ;; Resultado esperado: 7
+
+
     ;; mapping
     ;; Esta función aplica la función funcion a cada elemento de
     ;; la lista lista. Devuelve una nueva lista con los resultados
@@ -454,7 +501,12 @@
           '()
           (cons (funcion (car lista)) (mapping funcion (cdr lista)))))
 
-    ;; emilimar-repetidos
+    ;; Caso de prueba 1: Lista vacía
+    (mapping (lambda (x) (+ x 1)) '()) ;; Resultado esperado: '()
+    ;; Caso de prueba 2: Lista con elementos
+    (mapping (lambda (x) (* x 2)) '(1 2 3 4 5)) ;; Resultado esperado: '(2 4 6 8 10)
+
+    ;; eliminar-repetidos
     ;; Esta función toma una lista lst y elimina los elementos repetidos,
     ;; devuelve una nueva lista sin repetidos.
     (define (eliminar-repetidos lst)
@@ -474,6 +526,19 @@
         ((null? lista) #f)
         ((equal? elemento (car lista)) #t)
         (else (elemento-repetido? elemento (cdr lista)))))
+
+    ;; eliminar-repetidos
+    ;; Caso de prueba 1: Lista vacía
+    (eliminar-repetidos '()) ;; Resultado esperado: '()
+    ;; Caso de prueba 2: Lista con elementos repetidos
+    (eliminar-repetidos '(1 2 2 3 3 3 4 4 4 4 5 5 5 5 5)) ;; Resultado esperado: '(1 2 3 4 5)
+
+    ;; elemento-repetido?
+    ;; Caso de prueba 1: Elemento repetido en lista vacía
+    (elemento-repetido? 1 '()) ;; Resultado esperado: #f
+    ;; Caso de prueba 2: Elemento repetido en lista no vacía
+    (elemento-repetido? 3 '(1 2 3 4 5)) ;; Resultado esperado: #t
+
 
     (let ((lista-abs (mapping valor-absoluto lista)))
       (eliminar-repetidos lista-abs)))
@@ -570,6 +635,7 @@
      (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula)))
   )
 
+
 ;; evaluar-literal
 ;; La función evaluar-literal se utiliza para evaluar el valor de una variable
 ;; literal dentro del contexto de un ambiente dado, toma como entrada un literal
@@ -588,6 +654,21 @@
               (negar (apply-env env (* -1 valor)))
               (apply-env env valor))
           (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
+
+
+;; evaluar-clausula
+;; Caso de prueba 1: Cláusula con un literal verdadero en un ambiente falso
+(evaluar-clausula (crear-clausula-final (crear-literal (crear-variable 2))) '(#f #f) (extend-env 2 #t (empty-env))) ;; Resultado esperado: #f
+;; Caso de prueba 2: Cláusula con una disyunción de literales verdaderos en un ambiente verdadero
+(evaluar-clausula (crear-clausula (crear-literal (crear-variable 1)) (crear-disyuncion) (crear-clausula-final (crear-literal (crear-variable 2)))) '(#t #t) (extend-env 1 #t (extend-env 2 #t (empty-env)))) ;; Resultado esperado: #t
+
+
+;; evaluar-literal
+;; Caso de prueba 1: Literal positivo en un ambiente verdadero
+(evaluar-literal (crear-literal (crear-variable 2)) '(#t #t #t) (extend-env 2 #t (empty-env))) ;; Resultado esperado: #t
+;; Caso de prueba 2: Literal negativo en un ambiente falso
+(evaluar-literal (crear-literal (crear-variable -3)) '(#f #f #f) (extend-env 3 #f (empty-env))) ;; Resultado esperado: #t
+
 
 ;; EVALUARSAT: Ejemplos de uso
 (EVALUARSAT (crear-FNC 1 ;; x
@@ -657,34 +738,3 @@
                           (crear-clausula-final
                            (crear-literal
                             (crear-variable -3)))))))) ;; (satisfactible (#f #f #f))
-
-#|
-;; Gramatica BNF
-;; <FNC> ::= 'FNC <numero-variables> <expresion>
-;; <numero-variables> ::= <int>
-;; <expresion> ::= <clausula> | <clausula> <conjuncion> <expresion>
-;; <clausula> ::= <literal> | <literal> <disyunción> <clausula>
-;; <literal> ::= <variable>
-;; <variable> ::= <int>
-;; <conjuncion> ::= 'and
-;; <disyunción> ::= 'or
-(EVALUARSAT (crear-FNC 4 ; 1 and (2 or 3)
-                       (crear-expresion
-                        (crear-clausula-final
-                         (crear-literal
-                          (crear-variable 1)))
-
-                        (crear-conjuncion)
-
-                        (crear-expresion-final
-
-                         (crear-clausula
-                          (crear-literal
-                           (crear-variable 2))
-
-                          (crear-disyuncion)
-
-                          (crear-clausula-final
-                           (crear-literal
-                            (crear-variable 3))))))))
-                            |#
