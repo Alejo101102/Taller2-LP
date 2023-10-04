@@ -30,17 +30,33 @@
 ;<literal> ::= <variable>
 ;<variable> ::= <int>
 
+;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 ;; Implementacion de ambientes (codigo de clase)
 ;; empty-env
+;; Esta función crea un entorno vacío en forma de una lista.
+;; Se emplea para inicializar un entorno vacío que se utilizará
+;; posteriormente para mantener asociaciones entre variables y
+;; valores en un contexto dado.
 (define empty-env
   (lambda () (list 'empty-env)))
 
 ;; extend-env
+;; Esta función extiende un entorno existente agregando una nueva
+;; asociación entre una variable (var) y su valor (val).
+;; se utiliza para crear un nuevo entorno que contiene una
+;; extensión del entorno original. Esta extensión permite que una
+;; variable esté vinculada a un valor dentro del entorno resultante.
 (define extend-env
   (lambda (var val env)
     (list 'extend-env var val env)))
 
 ;; apply-env
+;; Esta función busca una variable (search-var) en un entorno dado
+;; (env) y devuelve su valor asociado si se encuentra. Si la variable
+;; no se encuentra en el entorno, genera un error.
+;; Se emplea para buscar y recuperar el valor asociado a una variable
+;; en un entorno. Esta función es útil en el contexto de la evaluación
+;; de expresiones o la resolución de variables dentro de un programa.
 (define apply-env
   (lambda (env search-var)
     (cond ((eqv? (car env) 'empty-env)
@@ -54,18 +70,24 @@
                  (apply-env saved-env search-var))))
           (else (eopl:error 'apply-env "Expecting an environment, given ~s" env)))))
 
-;Función auxiliar para determinar el tamaño de una lista
-(define (longitud-lista lst)
-  (if (null? lst)
-      0
-      (+ 1 (longitud-lista (cdr lst)))))
 
+;; cons-end
+;; Esta función agrega un elemento (elemento) al final de una lista (lista) dada.
+;; Se utiliza para construir nuevas listas agregando un elemento
+;; al final de una lista existente. Puede ser útil en varias operaciones
+;; de manipulación de listas y estructuras de datos en Racket.
 (define cons-end
   (lambda (lista elemento)
     (cond
       ((null? lista) elemento)
       (else (cons (car lista)
                   (cons-end (cdr lista) elemento))))))
+
+;Función auxiliar para determinar el tamaño de una lista
+(define (longitud-lista lst)
+  (if (null? lst)
+      0
+      (+ 1 (longitud-lista (cdr lst)))))
 
 (define negar
   (lambda (valor-booleano)
@@ -275,7 +297,7 @@
         (clausula-final
          (lit (numero 6))))))
 
-(define expresion-sat-doble ; (1 or -1)and 2
+(define expresion-sat-doble ; (1 or -1) and 2
   (FNC 2
        (expresion-no-final
         (clausula-no-final
@@ -288,13 +310,30 @@
          (clausula-final
           (lit (numero 2)))))))
 
-;; 3) Evaluador ;; En Desarrollo
+;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
+;; EVALUARSAT
+;; Esta función toma una expresión FNC y
+;; busca una asignación de variables que satisfaga la expresión,
+;; si se encuentra una asignación satisfactoria devuelve una
+;; lista que indica que la FNC es satisfactible junto con la
+;; asignación que lo satisface. Si no se encuentra ninguna
+;; asignación satisfactoria devuelve una lista que indica que
+;; la FNC es insatisfactible junto con una lista vacía.
+;; Se emplea para determinar si una expresión FNC dada es satisfactible
+;; y en caso afirmativo, proporcionar una asignación de variables que satisfaga la expresión.
 (define (EVALUARSAT FNC)
   (let ((solucion (explorar-solucion FNC (obtener-numero-variables FNC) '())))
     (if (null? solucion)
         (list 'insatisfactible '())
         (list 'satisfactible solucion))))
 
+;; Esta función es una función auxiliar utilizada por EVALUARSAT.
+;; Explora recursivamente posibles asignaciones de variables para
+;; verificar si alguna de ellas satisface la FNC dada. Comienza con
+;; una asignación actual y prueba todas las posibles combinaciones
+;; de valores de verdad para las variables. Devuelve la asignación
+;; si encuentra una que satisface la FNC o una lista vacía si no la encuentra.
+;; Se emplea internamente en la función EVALUARSAT para buscar asignaciones que satisfagan la FNC.
 (define (explorar-solucion FNC num-variables asignacion-actual)
   (if (= (longitud-lista asignacion-actual) num-variables)
       (if (evaluar-FNC FNC asignacion-actual)
@@ -308,54 +347,109 @@
                  (solucion-false (explorar-solucion FNC num-variables asignacion-false)))
           (if (not (null? solucion-true))
               solucion-true
-              solucion-false)
-          )
-        )
-      )
-  )
+              solucion-false)))))
 
+;; crear-ambiente
+;; Esta función crea un ambiente de variables a partir de una asignación
+;; de variables dada. Toma la FNC (FNC) y una asignación de variables (asignacion)
+;; y crea un entorno (ambiente) en el que las variables están vinculadas a sus valores
+;; correspondientes según la asignación.
+;; Se utiliza para generar un entorno que contiene las asociaciones entre variables
+;; y valores según una asignación específica, esto es util para la evaluación posterior de la FNC.
 (define (crear-ambiente FNC asignacion)
 
+  ;; crear-ambiente-aux
+  ;; La función crear-ambiente-aux crea un ambiente de variables
+  ;; a partir de una asignación de valores. Toma tres argumentos:
+  ;; vals, una lista de variables; asignacion, una lista de valores
+  ;; correspondientes a esas variables; y env, un ambiente de variables existente.
+  ;; La función genera un nuevo ambiente donde cada variable en vals se asocia
+  ;; a su valor correspondiente en asignacion, basándose en el ambiente previo env.
+  ;; Luego, se llama de manera recursiva para procesar las variables restantes
+  ;; en vals y sus valores en asignacion. Se utiliza en la satisfactibilidad
+  ;; de expresiones FNC para crear ambientes de variables basados en asignaciones específicas.
   (define (crear-ambiente-aux vals asignacion env)
     (if (equal? (longitud-lista vals) 0)
         env
         (letrec ((new-env (extend-env (car vals) (car asignacion) env)))
-          (crear-ambiente-aux (cdr vals) (cdr asignacion) new-env)
-          )
-        )
-    )
+          (crear-ambiente-aux (cdr vals) (cdr asignacion) new-env))))
 
   (let ((vals (variables-FNC FNC)))
-    (crear-ambiente-aux vals asignacion (empty-env))
-    )
-  )
+    (crear-ambiente-aux vals asignacion (empty-env))))
 
+;; variables-FNC
+;; La función variables-FNC se encarga de extraer todas las variables presentes
+;; en una expresión FNC (Forma Normal Conjuntiva) dada. Esta función recorre la
+;; estructura de la FNC y obtiene todas las variables presentes, sin diferenciar
+;; entre si están negadas (son números positivos) o no. En resumen, toma una expresión
+;; FNC como entrada y devuelve una lista que contiene todas las variables presentes
+;; en esa expresión, sin elementos repetidos.
+;; Esta función es útil en el contexto de la satisfactibilidad de expresiones lógicas
+;; donde es necesario conocer todas las variables involucradas en la expresión para
+;; evaluarla adecuadamente y determinar su satisfactibilidad.
 (define (variables-FNC FNC)
-  (define (obtener-variable-expresion expresion)
-    (obtener-numero (obtener-variable (obtener-literal (obtener-clausula expresion))))    )
 
+  ;; up
+  ;; La función up toma una lista L como entrada y elimina todos los
+  ;; niveles internos de paréntesis de la lista, dejando solo los
+  ;; elementos en una lista plana. Esta función se emplea para
+  ;; simplificar una estructura de lista anidada, extrayendo todos
+  ;; los elementos de las sublistas y presentándolos en una lista única y plana.
   (define (up L)
+
+    ;; up-aux
+    ;; La función interna up-aux se utiliza en la función principal up
+    ;; y desempeña un papel crucial en la eliminación de los niveles
+    ;; internos de paréntesis en una lista. up-aux toma dos listas como
+    ;; entrada, l1 y l2. Su principal función es recorrer l1 y, en caso
+    ;; de encontrar elementos que son sublistas, los descomprime y agrega
+    ;; sus elementos a l2, creando así una lista plana sin niveles internos
+    ;; de paréntesis. La función up-aux se utiliza para procesar y aplanar
+    ;; las sublistas anidadas dentro de la lista original L que se pasa como
+    ;; argumento a la función up.
+    ;; La función principal up usa up-aux para realizar la eliminación de los niveles internos de paréntesis en la lista L.
     (define (up-aux l1 l2)
       (cond
         ((null? l1) l2)
         (else (cons (car l1) (up-aux (cdr l1) l2)))))
-
     (cond
       ((null? L) '())
       ((list? (car L)) (up-aux (up (car L)) (up (cdr L))))
-      (else (cons (car L) (up (cdr L)))))
-    )
+      (else (cons (car L) (up (cdr L))))))
 
+  ;; limpiar-lista
+  ;; La función limpiar-lista recibe una lista de números
+  ;; realiza varias operaciones en ella y devuelve una nueva
+  ;; lista que contiene los valores absolutos de los números
+  ;; en la lista de entrada, eliminando cualquier número repetido.
+  ;; Recibe una lista de números, primero calcula el valor absoluto
+  ;; de cada número en la lista de entrada utilizando la función
+  ;; auxiliar valor-absoluto, luego utiliza la función eliminar-repetidos
+  ;; para eliminar los números duplicados en la lista resultante y devuelve
+  ;; una nueva lista que contiene los valores absolutos de los números en la
+  ;; lista de entrada, sin elementos repetidos.
+  ;; Esta función se emplea para sacar todas las variables sin diferenciar entre
+  ;; si estan negadas (son numero positivo) o no.
   (define (limpiar-lista lista)
+
+    ;; valor-absoluto
+    ;; Esta función toma un número num y calcula su valor absoluto,
+    ;; devuelve el número positivo correspondiente al valor absoluto del número negativo.
     (define (valor-absoluto num)
       (if (< num 0) (- num) num))
 
-    (define mapping
-      (lambda (funcion lista)
-        (if (null? lista)
-            '()
-            (cons (funcion (car lista)) (mapping funcion (cdr lista))))))
+    ;; mapping
+    ;; Esta función aplica la función funcion a cada elemento de
+    ;; la lista lista. Devuelve una nueva lista con los resultados
+    ;; de aplicar la función a cada elemento de la lista original.
+    (define (mapping funcion lista)
+      (if (null? lista)
+          '()
+          (cons (funcion (car lista)) (mapping funcion (cdr lista)))))
 
+    ;; emilimar-repetidos
+    ;; Esta función toma una lista lst y elimina los elementos repetidos,
+    ;; devuelve una nueva lista sin repetidos.
     (define (eliminar-repetidos lst)
       (cond
         ((null? lst) '())
@@ -364,6 +458,10 @@
              (eliminar-repetidos (cdr lst))
              (cons (car lst) (eliminar-repetidos (cdr lst)))))))
 
+    ;; elemento-repetido?
+    ;; Esta función verifica si un elemento dado elemento está repetido
+    ;; en una lista lista. Devuelve #t si el elemento está repetido y #f
+    ;; en caso contrario.
     (define (elemento-repetido? elemento lista)
       (cond
         ((null? lista) #f)
@@ -373,12 +471,19 @@
     (let ((lista-abs (mapping valor-absoluto lista)))
       (eliminar-repetidos lista-abs)))
 
+  ;; La función variables-FNC-aux se utiliza para extraer
+  ;; todas las variables presentes en una expresión FNC dada.
+  ;; Esta función toma una expresión como entrada y si es
+  ;; una expresión final devuelve una lista que contiene
+  ;; la variable presente en esa expresión. Si la expresión
+  ;; no es final (es una expresión compuesta),
+  ;; recursivamente se extraen las variables de cada subexpresión
+  ;; interna y se combinan en una lista.
   (define (variables-FNC-aux expresion)
     (if (es-expresion-final? expresion)
-        (list (obtener-variable-expresion expresion))
-        (list (obtener-variable-expresion expresion)
-              (variables-FNC-aux (obtener-expresion-interna expresion))))
-    )
+        (list (obtener-numero (obtener-variable (obtener-literal (obtener-clausula expresion)))))
+        (list (obtener-numero (obtener-variable (obtener-literal (obtener-clausula expresion))))
+              (variables-FNC-aux (obtener-expresion-interna expresion)))))
 
   (cond
     ((es-FNC? FNC)
@@ -387,21 +492,29 @@
        ))
     (else (eopl:error 'variables-FNC "Expecting FNC, given ~s" FNC))))
 
+;; evaluar-FNC
+;; La función evaluar-FNC se encarga de evaluar una
+;; expresión FNC dada respecto a una asignación de variables específica.
+;; Para lograr esto, primero obtiene la expresión FNC
+;; y crea un entorno (ambiente) de variables basado en
+;; la asignación proporcionada, luego utiliza este
+;; ambiente para evaluar la expresión FNC. Esta función
+;; es empleada para determinar si una asignación de variables
+;; satisface una FNC dada, es decir, si hace que la FNC sea verdadera o falsa.
 (define (evaluar-FNC FNC asignacion)
   (let ((expresion (obtener-expresion FNC))
         (env (crear-ambiente FNC asignacion)))
-    (evaluar-expresion expresion asignacion env)
-    ))
+    (evaluar-expresion expresion asignacion env)))
 
+;; evaluar-expresion
+;; Esta función se utiliza para evaluar una expresión en el contexto
+;; de una asignación de variables y un ambiente dado, puede manejar
+;; expresiones que son finales (terminales) o compuestas por conjunciones
+;; y disyunciones, evalúa la expresión y devuelve el resultado booleano de la evaluación.
+;; Se emplea en la evaluación de satisfactibilidad (SAT) de expresiones FNC.
+;; Puede evaluar una expresión FNC y determinar si es verdadera o falsa
+;; en función de una asignación de variables y un ambiente específicos.
 (define (evaluar-expresion expresion asignacion env)
-  #| Desarrollador
-  (display "\n\n Soy evaluar-expresion \n")
-  (display "Expresion es: --> ") (display expresion)
-  (display "\n")
-  (display "Asignacion es: --> ") (display asignacion)
-  (display "\n")
-   |#
-
   (cond
     ((es-expresion-final? expresion)
      (evaluar-clausula (obtener-clausula expresion) asignacion env)
@@ -417,22 +530,23 @@
         (
          or (evaluar-clausula (obtener-clausula expresion) asignacion env)
             (evaluar-expresion (obtener-expresion-interna expresion) asignacion env)
-            ))
-       ))
+            ))))
     (else
      (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
 
+;; evaluar-clausula
+;; La función evaluar-clausula se utiliza para evaluar una cláusula en el
+;; contexto de la satisfactibilidad de una expresión en FNC.
+;; Esta función toma una cláusula (clausula), una asignación de variables (asignacion)
+;; y un ambiente (env) como entrada y determina si la cláusula es verdadera o falsa en
+;; función de la asignación de variables y el ambiente proporcionados.
+;; La función evalúa una cláusula en el contexto de una FNC, comprueba si la
+;; cláusula es verdadera o falsa en función de los valores de verdad de los literales
+;; que la componen y la asignación de variables proporcionada.
+;; Se emplea en el proceso de evaluación de una FNC para verificar si una
+;; cláusula específica es satisfactible o no y contribuye a la evaluación global de la FNC
+;; y a determinar si una asignación satisface la expresión FNC en su conjunto.
 (define (evaluar-clausula clausula asignacion env)
-  #| Desarrollador
-  (display "\n\n Soy evaluar-clausula \n")
-  (display "Clausula es: --> ") (display clausula)
-  (display "\n")
-  (display "Asignacion es: --> ") (display asignacion)
-  (display "\n")
-  (display "Literal es: --> ") (display (obtener-literal clausula))
-  (display "\n")
-  |#
-
   (cond
     ((es-clausula-final? clausula)
      (evaluar-literal (obtener-literal clausula) asignacion env))
@@ -449,6 +563,16 @@
      (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula)))
   )
 
+;; evaluar-literal
+;; La función evaluar-literal se utiliza para evaluar el valor de una variable
+;; literal dentro del contexto de un ambiente dado, toma como entrada un literal
+;; (literal), una asignación de variables (asignacion) y un ambiente de variables (env).
+;; La función primero obtiene la variable del literal y su valor correspondiente, luego
+;; verifica si la variable es negativa o positiva y utiliza el ambiente (env) para
+;; recuperar el valor apropiado de la variable. Si la variable es negativa se negará
+;; su valor en el ambiente. Se emplea en el contexto de la evaluación de expresiones
+;; FNC para determinar el valor de verdad de una variable literal en función de una
+;; asignación y un ambiente dados.
 (define (evaluar-literal literal asignacion env)
   (let ((variable (obtener-variable literal)))
     (let ((valor (obtener-numero variable)))
@@ -456,100 +580,73 @@
           (if (< valor 0)
               (negar (apply-env env (* -1 valor)))
               (apply-env env valor))
-
           (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
 
-;; Conejillos de indias
-(define basicFNC1 ; x
-  (crear-FNC 1
-             (crear-expresion-final
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable 3))))))
+;; EVALUARSAT: Ejemplos de uso
+(EVALUARSAT (crear-FNC 1 ;; x
+                       (crear-expresion-final
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable 3)))))) ;; (satisfactible (#t))
+(EVALUARSAT (crear-FNC 1 ;; -x
+                       (crear-expresion-final
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable -3)))))) ;; (satisfactible (#f))
+(EVALUARSAT (crear-FNC 1;; -x and x
+                       (crear-expresion
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable -1)))
 
-(define basicFNC1-1 ; -x
-  (crear-FNC 1
-             (crear-expresion-final
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable -3))))))
+                        (crear-conjuncion)
 
-(define basicFNC2-1 ; x and y
-  (crear-FNC 2
-             (crear-expresion
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable 2)))
+                        (crear-expresion-final
+                         (crear-clausula-final
+                          (crear-literal
+                           (crear-variable 1)))
+                         )
+                        ))) ;; (insatisfactible ())
+(EVALUARSAT (crear-FNC 2 ;; x and y
+                       (crear-expresion
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable 2)))
 
-              (crear-conjuncion)
+                        (crear-conjuncion)
 
-              (crear-expresion-final
-               (crear-clausula-final
-                (crear-literal
-                 (crear-variable 1)))))))
+                        (crear-expresion-final
+                         (crear-clausula-final
+                          (crear-literal
+                           (crear-variable 1))))))) ;; (satisfactible (#t #t))
+(EVALUARSAT (crear-FNC 2 ;; x and -y
+                       (crear-expresion
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable 2)))
 
-(define basicFNC2-2 ; x and -y
-  (crear-FNC 2
-             (crear-expresion
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable 2)))
+                        (crear-conjuncion)
 
-              (crear-conjuncion)
+                        (crear-expresion-final
+                         (crear-clausula-final
+                          (crear-literal
+                           (crear-variable -1))))))) ;; (satisfactible (#t #f))
+(EVALUARSAT (crear-FNC 3 ;; -x and -y and -z
+                       (crear-expresion
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable -1)))
 
-              (crear-expresion-final
-               (crear-clausula-final
-                (crear-literal
-                 (crear-variable -1)))))))
+                        (crear-conjuncion)
 
+                        (crear-expresion
+                         (crear-clausula-final
+                          (crear-literal
+                           (crear-variable -2)))
 
-(define basicFNC3 ; x and y and z
-  (crear-FNC 3
-             (crear-expresion
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable -1)))
+                         (crear-conjuncion)
 
-              (crear-conjuncion)
-
-              (crear-expresion
-               (crear-clausula-final
-                (crear-literal
-                 (crear-variable -2)))
-
-               (crear-conjuncion)
-
-               (crear-expresion-final
-                (crear-clausula-final
-                 (crear-literal
-                  (crear-variable -3))))))))
-
-(define basicFNC1-0 ;; -x and x
-  (crear-FNC 1
-             (crear-expresion
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable -1)))
-
-              (crear-conjuncion)
-
-              (crear-expresion-final
-               (crear-clausula-final
-                (crear-literal
-                 (crear-variable 1)))
-               )
-              )))
-
-(display "\n")
-;; x
-(display "basicFNC1: ") (display (EVALUARSAT basicFNC1)) (display "\n\n") ;; (satisfactible (#t))
-;; -x
-(display "basicFNC1-1: ") (display (EVALUARSAT basicFNC1-1)) (display "\n\n") ;; (satisfactible (#f))
-;; -x and x
-(display "basicFNC1-0: ") (display (EVALUARSAT basicFNC1-0)) (display "\n\n") ;; (insatisfactible ())
-;; x and y
-(display "basicFNC2-1: ") (display (EVALUARSAT basicFNC2-1)) (display "\n\n") ;; (satisfactible (#t #t))
-;; x and -y
-(display "basicFNC2-2: ") (display (EVALUARSAT basicFNC2-2)) (display "\n\n") ;; (satisfactible (#t #f))
-;; -x and -y and -z
-(display "basicFNC3: ") (display (EVALUARSAT basicFNC3)) (display "\n\n") ;; (satisfactible (#f #f #f))
+                         (crear-expresion-final
+                          (crear-clausula-final
+                           (crear-literal
+                            (crear-variable -3)))))))) ;; (satisfactible (#f #f #f))
