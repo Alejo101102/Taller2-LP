@@ -91,7 +91,11 @@
   (if (null? lst)
       0
       (+ 1 (longitud-lista (cdr lst)))))
-
+;; negar
+;; La función negar toma un valor booleano como entrada y devuelve el valor booleano
+;; negado. Si el valor de entrada es #t, la función devuelve #f, y si el valor de entrada
+;; es #f, la función devuelve #t. Esta función se emplea para cambiar el valor de verdad
+;; de una variable booleana.
 (define negar
   (lambda (valor-booleano)
     (if (eqv? valor-booleano #t) #f #t)
@@ -654,7 +658,16 @@
                            (crear-literal
                             (crear-variable -3)))))))) ;; (satisfactible (#f #f #f))
 
-#|
+;; Gramatica BNF
+;; <FNC> ::= 'FNC <numero-variables> <expresion>
+;; <numero-variables> ::= <int>
+;; <expresion> ::= <clausula> | <clausula> <conjuncion> <expresion>
+;; <clausula> ::= <literal> | <literal> <disyunción> <clausula>
+;; <literal> ::= <variable>
+;; <variable> ::= <int>
+;; <conjuncion> ::= 'and
+;; <disyunción> ::= 'or
+
 (EVALUARSAT (crear-FNC 4 ; 1 and (2 or 3)
                        (crear-expresion
                         (crear-clausula-final
@@ -674,4 +687,3 @@
                           (crear-clausula-final
                            (crear-literal
                             (crear-variable 3))))))))
-                            |#
