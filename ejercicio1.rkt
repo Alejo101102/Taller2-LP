@@ -19,16 +19,15 @@
 ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 ;; DESARROLLO
 
-;Gramatica BNF
-
-;<FNC> ::= 'FNC <numero-variables> <expresion>
-;<numero-variables> ::= <int>
-;<expresion> ::= <clausula> | <clausula> <conjuncion> <expresion>
-;<conjuncion> ::= 'and
-;<clausula> ::= <literal> | <literal> <disyunción> <clausula>
-;<disyunción> ::= 'or
-;<literal> ::= <variable>
-;<variable> ::= <int>
+;; Gramatica BNF
+;; <FNC> ::= 'FNC <numero-variables> <expresion>
+;; <numero-variables> ::= <int>
+;; <expresion> ::= <clausula> | <clausula> <conjuncion> <expresion>
+;; <conjuncion> ::= 'and
+;; <clausula> ::= <literal> | <literal> <disyunción> <clausula>
+;; <disyunción> ::= 'or
+;; <literal> ::= <variable>
+;; <variable> ::= <int>
 
 ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 ;; Implementacion de ambientes (codigo de clase)
@@ -70,20 +69,24 @@
                  (apply-env saved-env search-var))))
           (else (eopl:error 'apply-env "Expecting an environment, given ~s" env)))))
 
-
 ;; cons-end
 ;; Esta función agrega un elemento (elemento) al final de una lista (lista) dada.
 ;; Se utiliza para construir nuevas listas agregando un elemento
 ;; al final de una lista existente. Puede ser útil en varias operaciones
 ;; de manipulación de listas y estructuras de datos en Racket.
-(define cons-end
-  (lambda (lista elemento)
-    (cond
-      ((null? lista) elemento)
-      (else (cons (car lista)
-                  (cons-end (cdr lista) elemento))))))
+(define (cons-end lista elemento)
+  (cond
+    ((null? lista) elemento)
+    (else (cons (car lista)
+                (cons-end (cdr lista) elemento)))))
 
-;Función auxiliar para determinar el tamaño de una lista
+;; longitud-lista
+;; La función longitud-lista calcula la longitud (cantidad de elementos)
+;; de una lista dada. Funciona de manera recursiva, incrementando un contador
+;; en 1 por cada elemento de la lista hasta que la lista esté vacía,
+;; momento en el que devuelve el contador acumulado, que es la longitud total de la lista.
+;; Esta función se emplea para obtener la cantidad de elementos presentes en una lista,
+;; lo que puede ser útil en diversos contextos como manipulación y análisis de listas.
 (define (longitud-lista lst)
   (if (null? lst)
       0
@@ -650,3 +653,25 @@
                           (crear-clausula-final
                            (crear-literal
                             (crear-variable -3)))))))) ;; (satisfactible (#f #f #f))
+
+#|
+(EVALUARSAT (crear-FNC 4 ; 1 and (2 or 3)
+                       (crear-expresion
+                        (crear-clausula-final
+                         (crear-literal
+                          (crear-variable 1)))
+
+                        (crear-conjuncion)
+
+                        (crear-expresion-final
+
+                         (crear-clausula
+                          (crear-literal
+                           (crear-variable 2))
+
+                          (crear-disyuncion)
+
+                          (crear-clausula-final
+                           (crear-literal
+                            (crear-variable 3))))))))
+                            |#
