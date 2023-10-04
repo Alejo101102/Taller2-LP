@@ -392,10 +392,8 @@
   ) |#
 
 (define (variables-FNC FNC)
-
   (define (obtener-variable-expresion expresion)
-    (obtener-numero (obtener-variable (obtener-literal (obtener-clausula expresion))))
-    )
+    (obtener-numero (obtener-variable (obtener-literal (obtener-clausula expresion))))    )
 
   (define (up L)
     (define (up-aux l1 l2)
@@ -411,9 +409,7 @@
 
   (define (limpiar-lista lista)
     (define (valor-absoluto num)
-      (if (< num 0)
-          (- num)
-          num))
+      (if (< num 0) (- num) num))
 
     (define mapping
       (lambda (funcion lista)
@@ -425,11 +421,15 @@
       (cond
         ((null? lst) '())
         (else
-         (let ((resto-sin-repetidos (eliminar-repetidos (cdr lst))))
-           (if (member (car lst) resto-sin-repetidos)
-               resto-sin-repetidos
-               (cons (car lst) resto-sin-repetidos))))))
+         (if (elemento-repetido? (car lst) (cdr lst))
+             (eliminar-repetidos (cdr lst))
+             (cons (car lst) (eliminar-repetidos (cdr lst)))))))
 
+    (define (elemento-repetido? elemento lista)
+      (cond
+        ((null? lista) #f)
+        ((equal? elemento (car lista)) #t)
+        (else (elemento-repetido? elemento (cdr lista)))))
 
     (let ((lista-abs (mapping valor-absoluto lista)))
       (eliminar-repetidos lista-abs)))
@@ -542,3 +542,7 @@
 (display "basicFNC2-2: ") (display (EVALUARSAT basicFNC2-2)) (display "\n\n") ;; (satisfactible (#t #f))
 ;; -x and -y and -z
 (display "basicFNC3: ") (display (EVALUARSAT basicFNC3)) (display "\n\n") ;; (satisfactible (#t #t #t))
+
+;; FALTA:
+;; - La funcion que cree el ambiente inicial dado las variables y la asignacion
+;; - Modificar la funcion para evaluar variables para que tome la asignacion del ambiente
