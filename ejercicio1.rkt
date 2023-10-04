@@ -112,7 +112,8 @@
 (define (es-expresion? expresion)
   (and (list? expresion)
        (eq? 'expresion (car expresion))
-       (eq? 'and (caddr expresion))))
+       (or (eq? 'and (caddr expresion))
+           (eq? 'or (caddr expresion)))))
 
 (define (es-clausula-final? clausula)
   (and (list? clausula) (eq? 'clausula-final (car clausula))))
@@ -120,7 +121,8 @@
 (define (es-clausula? clausula)
   (and (list? clausula)
        (eq? 'clausula (car clausula))
-       (eq? 'or (caddr clausula))))
+       (or  (eq? 'and (caddr clausula))
+            (eq? 'or (caddr clausula)))))
 
 (define (es-literal? literal)
   (and (list? literal) (eq? 'literal (car literal))))
@@ -479,7 +481,7 @@
                (crear-literal
                 (crear-variable 2)))
 
-              (crear-conjuncion)
+              (crear-disyuncion)
 
               (crear-expresion-final
                (crear-clausula-final
