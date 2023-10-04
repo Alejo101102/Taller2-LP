@@ -312,84 +312,21 @@
       )
   )
 
-(define (evaluar-FNC FNC asignacion)
-  (let ((expresion (obtener-expresion FNC)))
-    (evaluar-expresion expresion asignacion)
-    ))
-
-(define (evaluar-expresion expresion asignacion)
-  #| Desarrollador
-  (display "\n\n Soy evaluar-expresion \n")
-  (display "Expresion es: --> ") (display expresion)
-  (display "\n")
-  (display "Asignacion es: --> ") (display asignacion)
-  (display "\n")
-   |#
-
-  (cond
-    ((es-expresion-final? expresion)
-     (evaluar-clausula (obtener-clausula expresion) asignacion)
-     )
-    ((es-expresion? expresion)
-     (cond
-       ((es-conjuncion? (caddr expresion))
-        (
-         and (evaluar-clausula (obtener-clausula expresion) asignacion)
-             (evaluar-expresion (obtener-expresion-interna expresion) asignacion)
-             ))
-       ((es-disyuncion? (caddr expresion))
-        (
-         or (evaluar-clausula (obtener-clausula expresion) asignacion)
-            (evaluar-expresion (obtener-expresion-interna expresion) asignacion)
-            ))
-       ))
-    (else
-     (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
-
-(define (evaluar-clausula clausula asignacion)
-  #| Desarrollador
-  (display "\n\n Soy evaluar-clausula \n")
-  (display "Clausula es: --> ") (display clausula)
-  (display "\n")
-  (display "Asignacion es: --> ") (display asignacion)
-  (display "\n")
-  (display "Literal es: --> ") (display (obtener-literal clausula))
-  (display "\n")
-  |#
-
-  (cond
-    ((es-clausula-final? clausula)
-     (evaluar-literal (obtener-literal clausula) asignacion))
-    ((es-clausula? clausula)
-     (cond
-       ((es-conjuncion? (caddr clausula))
-        (and (evaluar-literal (obtener-literal clausula) asignacion)
-             (evaluar-clausula (obtener-clausula clausula) asignacion)))
-       ((es-disyuncion? (caddr clausula))
-        (or (evaluar-literal (obtener-literal clausula) asignacion)
-            (evaluar-clausula (obtener-clausula clausula) asignacion))))
-     )
-    (else
-     (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula)))
-  )
-
-(define (evaluar-literal literal asignacion)
-  (let ((variable (obtener-variable literal)))
-    (let ((valor (obtener-numero variable)))
-      (if (es-variable? variable)
-          (if (< valor 0)
-              (negar (car asignacion))
-              (car asignacion))
-
-          (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
-
-#|
 (define (crear-ambiente FNC asignacion)
-  (let ((env (empty-env)))
-    (let ((expresion (obtener-expresion FNC)))
-      (crear-ambiente-aux expresion asignacion env))
-    env)
-  ) |#
+
+  (define (crear-ambiente-aux vals asignacion env)
+    (if (equal? (longitud-lista vals) 0)
+        env
+        (letrec ((new-env (extend-env (car vals) (car asignacion) env)))
+          (crear-ambiente-aux (cdr vals) (cdr asignacion) new-env)
+          )
+        )
+    )
+
+  (let ((vals (variables-FNC FNC)))
+    (crear-ambiente-aux vals asignacion (empty-env))
+    )
+  )
 
 (define (variables-FNC FNC)
   (define (obtener-variable-expresion expresion)
@@ -447,6 +384,78 @@
        (limpiar-lista (up (variables-FNC-aux expresion)))
        ))
     (else (eopl:error 'variables-FNC "Expecting FNC, given ~s" FNC))))
+
+(define (evaluar-FNC FNC asignacion)
+  (let ((expresion (obtener-expresion FNC))
+        (env (crear-ambiente FNC asignacion)))
+    (evaluar-expresion expresion asignacion env)
+    ))
+
+(define (evaluar-expresion expresion asignacion env)
+  #| Desarrollador
+  (display "\n\n Soy evaluar-expresion \n")
+  (display "Expresion es: --> ") (display expresion)
+  (display "\n")
+  (display "Asignacion es: --> ") (display asignacion)
+  (display "\n")
+   |#
+
+  (cond
+    ((es-expresion-final? expresion)
+     (evaluar-clausula (obtener-clausula expresion) asignacion env)
+     )
+    ((es-expresion? expresion)
+     (cond
+       ((es-conjuncion? (caddr expresion))
+        (
+         and (evaluar-clausula (obtener-clausula expresion) asignacion env)
+             (evaluar-expresion (obtener-expresion-interna expresion) asignacion env)
+             ))
+       ((es-disyuncion? (caddr expresion))
+        (
+         or (evaluar-clausula (obtener-clausula expresion) asignacion env)
+            (evaluar-expresion (obtener-expresion-interna expresion) asignacion env)
+            ))
+       ))
+    (else
+     (eopl:error 'evaluar-expresion "Entrada no válida: se esperaba una expresión, se recibió ~s" expresion))))
+
+(define (evaluar-clausula clausula asignacion env)
+  #| Desarrollador
+  (display "\n\n Soy evaluar-clausula \n")
+  (display "Clausula es: --> ") (display clausula)
+  (display "\n")
+  (display "Asignacion es: --> ") (display asignacion)
+  (display "\n")
+  (display "Literal es: --> ") (display (obtener-literal clausula))
+  (display "\n")
+  |#
+
+  (cond
+    ((es-clausula-final? clausula)
+     (evaluar-literal (obtener-literal clausula) asignacion env))
+    ((es-clausula? clausula)
+     (cond
+       ((es-conjuncion? (caddr clausula))
+        (and (evaluar-literal (obtener-literal clausula) asignacion env)
+             (evaluar-clausula (obtener-clausula clausula) asignacion env)))
+       ((es-disyuncion? (caddr clausula))
+        (or (evaluar-literal (obtener-literal clausula) asignacion env)
+            (evaluar-clausula (obtener-clausula clausula) asignacion env))))
+     )
+    (else
+     (eopl:error 'evaluar-clausula "Entrada no válida: se esperaba una cláusula, se recibió ~s" clausula)))
+  )
+
+(define (evaluar-literal literal asignacion env)
+  (let ((variable (obtener-variable literal)))
+    (let ((valor (obtener-numero variable)))
+      (if (es-variable? variable)
+          (if (< valor 0)
+              (negar (apply-env env (* -1 valor)))
+              (apply-env env valor))
+
+          (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
 
 ;; Conejillos de indias
 (define basicFNC1 ; x
@@ -541,8 +550,4 @@
 ;; x and -y
 (display "basicFNC2-2: ") (display (EVALUARSAT basicFNC2-2)) (display "\n\n") ;; (satisfactible (#t #f))
 ;; -x and -y and -z
-(display "basicFNC3: ") (display (EVALUARSAT basicFNC3)) (display "\n\n") ;; (satisfactible (#t #t #t))
-
-;; FALTA:
-;; - La funcion que cree el ambiente inicial dado las variables y la asignacion
-;; - Modificar la funcion para evaluar variables para que tome la asignacion del ambiente
+(display "basicFNC3: ") (display (EVALUARSAT basicFNC3)) (display "\n\n") ;; (satisfactible (#f #f #f))
