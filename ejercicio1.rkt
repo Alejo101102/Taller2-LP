@@ -481,7 +481,7 @@
                (crear-literal
                 (crear-variable 2)))
 
-              (crear-disyuncion)
+              (crear-conjuncion)
 
               (crear-expresion-final
                (crear-clausula-final
