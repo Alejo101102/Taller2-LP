@@ -383,6 +383,71 @@
 
           (eopl:error 'evaluar-literal "Entrada no válida: se esperaba una variable, se recibió ~s" variable)))))
 
+#|
+(define (crear-ambiente FNC asignacion)
+  (let ((env (empty-env)))
+    (let ((expresion (obtener-expresion FNC)))
+      (crear-ambiente-aux expresion asignacion env))
+    env)
+  ) |#
+
+(define (variables-FNC FNC)
+
+  (define (obtener-variable-expresion expresion)
+    (obtener-numero (obtener-variable (obtener-literal (obtener-clausula expresion))))
+    )
+
+  (define (up L)
+    (define (up-aux l1 l2)
+      (cond
+        ((null? l1) l2)
+        (else (cons (car l1) (up-aux (cdr l1) l2)))))
+
+    (cond
+      ((null? L) '())
+      ((list? (car L)) (up-aux (up (car L)) (up (cdr L))))
+      (else (cons (car L) (up (cdr L)))))
+    )
+
+  (define (limpiar-lista lista)
+    (define (valor-absoluto num)
+      (if (< num 0)
+          (- num)
+          num))
+
+    (define mapping
+      (lambda (funcion lista)
+        (if (null? lista)
+            '()
+            (cons (funcion (car lista)) (mapping funcion (cdr lista))))))
+
+    (define (eliminar-repetidos lst)
+      (cond
+        ((null? lst) '())
+        (else
+         (let ((resto-sin-repetidos (eliminar-repetidos (cdr lst))))
+           (if (member (car lst) resto-sin-repetidos)
+               resto-sin-repetidos
+               (cons (car lst) resto-sin-repetidos))))))
+
+
+    (let ((lista-abs (mapping valor-absoluto lista)))
+      (eliminar-repetidos lista-abs)))
+
+  (define (variables-FNC-aux expresion)
+    (if (es-expresion-final? expresion)
+        (list (obtener-variable-expresion expresion))
+        (list (obtener-variable-expresion expresion)
+              (variables-FNC-aux (obtener-expresion-interna expresion))))
+    )
+
+  (cond
+    ((es-FNC? FNC)
+     (letrec ((expresion (obtener-expresion FNC)))
+       (limpiar-lista (up (variables-FNC-aux expresion)))
+       ))
+    (else (eopl:error 'variables-FNC "Expecting FNC, given ~s" FNC))))
+
 ;; Conejillos de indias
 (define basicFNC1 ; x
   (crear-FNC 1
@@ -475,5 +540,5 @@
 (display "basicFNC2-1: ") (display (EVALUARSAT basicFNC2-1)) (display "\n\n") ;; (satisfactible (#t #t))
 ;; x and -y
 (display "basicFNC2-2: ") (display (EVALUARSAT basicFNC2-2)) (display "\n\n") ;; (satisfactible (#t #f))
-;; x and y and z
+;; -x and -y and -z
 (display "basicFNC3: ") (display (EVALUARSAT basicFNC3)) (display "\n\n") ;; (satisfactible (#t #t #t))
