@@ -658,7 +658,7 @@
 
 ;; evaluar-clausula
 ;; Caso de prueba 1: Cláusula con un literal verdadero en un ambiente falso
-(evaluar-clausula (crear-clausula-final (crear-literal (crear-variable 2))) '(#f #f) (extend-env 2 #t (empty-env))) ;; Resultado esperado: #f
+(evaluar-clausula (crear-clausula-final (crear-literal (crear-variable 2))) '(#f) (extend-env 2 #t (empty-env))) ;; Resultado esperado: #t
 ;; Caso de prueba 2: Cláusula con una disyunción de literales verdaderos en un ambiente verdadero
 (evaluar-clausula (crear-clausula (crear-literal (crear-variable 1)) (crear-disyuncion) (crear-clausula-final (crear-literal (crear-variable 2)))) '(#t #t) (extend-env 1 #t (extend-env 2 #t (empty-env)))) ;; Resultado esperado: #t
 
