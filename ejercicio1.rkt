@@ -387,6 +387,9 @@
 (es-variable? var-1) ; resultado #t
 (es-variable? var-2) ; resultado #f, pues se le esta ingresando un simbolo
 
+;es-conjuncion?
+;; La función examina si una expresión que se ingresa como parametro es igual a
+;; la cadena 'and, y retorna su valor de verdad.
 (define (es-conjuncion? expr)
   (eq? expr 'and))
 
@@ -394,6 +397,9 @@
 (es-conjuncion? 'and) ;resultado #t
 (es-conjuncion? 'or) ;resultado #f
 
+;es-disyuncion?
+;; La función examina si una expresión que se ingresa como parametro es igual a
+;; la cadena 'or, y retorna su valor de verdad.
 (define (es-disyuncion? expr)
   (eq? expr 'or))
 
@@ -401,6 +407,9 @@
 (es-disyuncion? 'and) ;resultado #f
 (es-disyuncion? 'or) ;resultado #t
 
+;es-numero?
+;; La función examina si una expresión que se ingresa como parametro es
+;; un número, y reotrna su respectivo valor de verdad.
 (define (es-numero? expr)
   (number? expr))
 
