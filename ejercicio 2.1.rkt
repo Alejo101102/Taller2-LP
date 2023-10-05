@@ -144,124 +144,23 @@
       (cadr variable)
       (eopl:error 'obtener-numero "Expecting expression, given ~s" variable)))
 
-; Ejemplos de instancias SAT
-(define expresion-1 ; 0
-  (crear-expresion-final
-   (crear-clausula-final
-    (crear-literal
-     (crear-variable 0)))))
-
-(define expresion-2 ; 1
-  (crear-expresion-final
-   (crear-clausula-final
-    (crear-literal
-     (crear-variable 1)))))
-
-
-(define expresion-3 ; 2
-  (crear-expresion-final
-   (crear-clausula-final
-    (crear-literal
-     (crear-variable 2)))))
-
-(define expresion-FNC-e ; 1 and 2 and 3
-  (crear-FNC 3
-             (crear-expresion
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable 1)))
-
-              (crear-conjuncion)
-
-              (crear-expresion
-               (crear-clausula-final
-                (crear-literal
-                 (crear-variable 2)))
-
-               (crear-conjuncion)
-
-               (crear-expresion-final
-                (crear-clausula-final
-                 (crear-literal
-                  (crear-variable 3))))))))
-
-(define expresion-FNC-2 ; 1 and 2 and (3 or 4)
-  (crear-FNC 4 ; Supongamos que 4 es el número que deseas
-             (crear-expresion
-              (crear-clausula-final
-               (crear-literal
-                (crear-variable 1)))
-              (crear-conjuncion)
-              (crear-expresion
-               (crear-clausula-final
-                (crear-literal
-                 (crear-variable 2)))
-               (crear-conjuncion)
-               (crear-expresion-final
-                (crear-clausula
-                 (crear-literal
-                  (crear-variable 3))
-                 (crear-disyuncion)
-                 (crear-clausula-final
-                  (crear-literal
-                   (crear-variable 4)))))))))
-
 
 ;; Punto 2
-
-#| Versión larga
-
-(define (PARSEBNF entrada)
-  (cond
-    ((number? entrada)
-     (crear-expresion-final
-      (crear-clausula-final
-       (crear-literal
-        (crear-variable entrada)))))
-
-    ((eq? (car entrada) 'or)
-     (let ((elementos (cdr entrada)))
-       (crear-expresion-final
-        (crear-clausula-final
-         (aplicar-disyuncion elementos)))))
-
-    ((eq? (car entrada) 'and)
-     (let ((elementos (cdr entrada)))
-       (crear-expresion-final
-        (crear-clausula-final
-         (aplicar-conjuncion elementos)))))
-
-    (else
-     (eopl:error "Entrada no válida"))))
-
-(define (aplicar-disyuncion elementos)
-  (cond
-    ((null? elementos) 'F)
-    ((null? (cdr elementos)) (PARSEBNF (car elementos)))
-    (else (crear-clausula
-           (crear-literal (PARSEBNF (car elementos)))
-           'or
-           (aplicar-disyuncion (cdr elementos))))))
-
-(define (aplicar-conjuncion elementos)
-  (cond
-    ((null? elementos) 'T)
-    ((null? (cdr elementos)) (PARSEBNF (car elementos)))
-    (else (crear-clausula
-           (crear-literal (PARSEBNF (car elementos)))
-           'and
-           (aplicar-conjuncion (cdr elementos))))))
-
-|#
-
-#| Versión corta
 
 (define (PARSEBNF entrada)
   (cond
     ((number? entrada) (crear-literal (crear-variable entrada)))
     ((eq? (car entrada) 'or) (crear-expresion-final (crear-clausula-final (aplicar-operador 'or (cdr entrada)))))
     ((eq? (car entrada) 'and) (crear-expresion-final (crear-clausula-final (aplicar-operador 'and (cdr entrada)))))
+    ((eq? (car entrada) 'not) (crear-expresion-final (crear-clausula-final (aplicar-not (cdr entrada)))))
     (else (eopl:error "Entrada no válida"))))
+
+(define (aplicar-not elementos)
+  (cond
+    ((null? elementos) (eopl:error "Operador 'not' debe tener un argumento"))
+    ((null? (cdr elementos)) (crear-literal (crear-variable (list 'not (PARSEBNF (car elementos))))))
+    (else (eopl:error "Operador 'not' solo debe tener un argumento"))))
+
 
 (define (aplicar-operador operador elementos)
   (cond
@@ -269,11 +168,10 @@
     ((null? (cdr elementos)) (PARSEBNF (car elementos)))
     (else (crear-clausula (crear-literal (PARSEBNF (car elementos))) operador (aplicar-operador operador (cdr elementos))))))
 
-|#
 
-#|
 ; Ejemplo de uso:
-(define entrada-ejemplo '(and 1 (or 2 3) 5))
-(define arbol-abstracto (PARSEBNF entrada-ejemplo))
-(display arbol-abstracto)
-|#
+(define entrada-ejemplo '(and 1 (or 2 (not 3)) 5))
+(define do (PARSEBNF entrada-ejemplo))
+(display do)
+
+
