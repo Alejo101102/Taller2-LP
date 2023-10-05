@@ -416,9 +416,10 @@
       (cadr FNC)
       (eopl:error 'obtener-numero-variables "Expecting expression, given ~s" FNC)))
 
-(obtener-numero-variables expresion-FNC-1)
-(obtener-numero-variables expresion-FNC-2)
-
+;Casos de prueba
+(obtener-numero-variables expresion-FNC-1) ; Resultado 2
+(obtener-numero-variables expresion-FNC-2) ; Resultado 2
+ 
 
 ;obtener-expresion
 ;;Funcion que extrae la expresión en una expresión FNC.
@@ -428,8 +429,30 @@
       (caddr FNC)
       (eopl:error 'obtener-expresion "Expecting BNF expression, given ~s" FNC)))
 
+;Casos de prueba
 (obtener-expresion expresion-FNC-1)
+;Resultado:
+;(expresion
+; (clausula (literal (variable 1)))
+; and
+; (expresion
+;  (clausula (literal (variable 2)))
+;  and
+;  (expresion (clausula (literal (variable 3))))))
+
 (obtener-expresion expresion-FNC-2)
+;Resultado:
+;(expresion
+; (clausula (literal (variable 1)))
+; and
+; (expresion
+;  (clausula (literal (variable 2)))
+;  and
+;  (expresion
+;   (clausula
+;    (literal (variable 3))
+;    or
+;    (clausula (literal (variable 4)))))))
 
 
 ;obtener-expresion-interna
@@ -438,8 +461,24 @@
 (define (obtener-expresion-interna expresion)
   (cadddr expresion))
 
+;Casos de prueba
 (obtener-expresion-interna (obtener-expresion expresion-FNC-1))
+;Resultado:
+; (expresion
+; (clausula (literal (variable 2)))
+; and
+; (expresion (clausula (literal (variable 3)))))
+
 (obtener-expresion-interna (obtener-expresion expresion-FNC-2))
+;Resultado:
+;(expresion
+; (clausula (literal (variable 2)))
+; and
+; (expresion
+;  (clausula
+;   (literal (variable 3))
+;   or
+;   (clausula (literal (variable 4))))))
 
 ;obtener-clausula
 ;;Funcion que extrae la clausula en una expresión.
@@ -449,8 +488,12 @@
       (cadr expresion)
       (eopl:error 'obtener-clausula "Expecting expression, given ~s" expresion)))
 
+;Casos de prueba
 (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-1)))
+;Resultado: (clausula (literal (variable 2)))
+
 (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-2)))
+;Resultado: (clausula (literal (variable 2)))
 
 ;obtener-literal
 ;;Funcion que extrae el literal de una clausula.
@@ -460,8 +503,12 @@
       (cadr clausula)
       (eopl:error 'obtener-literal "Expecting clausula, given ~s" clausula)))
 
+;Casos de prueba
 (obtener-literal (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-1))))
+;Resultado: (literal (variable 2))
+
 (obtener-literal (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-2))))
+;Resultado: (literal (variable 2))
 
 ;obtener-variable
 ;;Funcion que extrae la variable de un literal.
@@ -471,8 +518,11 @@
       (cadr literal)
       (eopl:error 'obtener-variable "Expecting literal, given ~s" literal)))
 
+;Casos de prueba
 (obtener-variable (obtener-literal (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-1)))))
+;Resultado: (variable 2)
 (obtener-variable (obtener-literal (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-2)))))
+;Resultado: (variable 2)
 
 ;obtener-numero
 ;;Funcion que extrae el numero de una variable.
@@ -482,62 +532,112 @@
       (cadr variable)
       (eopl:error 'obtener-numero "Expecting variable, given ~s" variable)))
 
+;Casos de prueba
 (obtener-numero (obtener-variable (obtener-literal (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-1))))))
+;Resultado: 2
+
 (obtener-numero (obtener-variable (obtener-literal (obtener-clausula (obtener-expresion-interna (obtener-expresion expresion-FNC-2))))))
+;Resultado: 2
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Implementación con datatype
-; Falta documentación y resolver conjunción y disyunción
 
-
+;expresion-FNC
+; Este tipo de dato recibe un numero de variable y una expresion, se encarga
+; de crear una representación de una expresión SAT en FNC.
 (define-datatype expresion-FNC expresion-FNC?
   (FNC (numero-variables number?)(expr expresion?))
 )
 
+
+
+;expresion
+; Este tipo de dato tiene dos posibles casos, cuando se trata de una
+; expresión final solamente recibe una clausula, por otra parte cuando es una
+; expresión no final, ademas de una clausula, debe recibir otra expresión
+; de forma recursiva.
 (define-datatype expresion expresion?
   (expresion-final (clausula clausula?))
   (expresion-no-final (clausula clausula?)
                       (expresion expresion?))
 )
 
+;clausula
+; Este tipo de dato tiene dos posibles casos, cuando se trata de una
+; clausula final recibe unicamente un literal, por otra parte cuando es una
+; clausula no final, ademas de un literal, debe recibir otra clausula,
+; de esta forma se ejecuta un llamdo recursivo.
 (define-datatype clausula clausula?
   (clausula-final (literal literal?))
   (clausula-no-final (literal literal?)
                     (clausula clausula?))
 )
 
+;literal
+; Este datatype recibe una variable, con la cual puede representar
+; abstractamente un literal.
 (define-datatype literal literal?
   (lit (variable variable?))
 )
 
+;variable
+; Este datatype crea una representación abstracta de una variable, recibiendo
+; como entrada un número.
 (define-datatype variable variable?
   (numero (num number?))
 )
 
-(define conjuncion?
-  (list 'and)
-)
+;Casos de prueba donde se implementan todas las funciones
 
-(define disyuncion?
-  (list 'or)
-)
-
-(define expr-sat-1 ; 6
+(define expr-sat-1 ; 6 and 7
   (FNC 1
-       (expresion-final
+       (expresion-no-final
         (clausula-final
-         (lit (numero 6))))))
+         (lit (numero 6)))
+        (expresion-final
+         (clausula-final
+          (lit(numero 7)))))))
 
-(define expresion-sat-doble ; (1 or -1)and 2
+;Resultado:
+;#(struct:FNC 1 #(struct:expresion-no-final #(struct:clausula-final
+;#(struct:lit #(struct:numero 6))) #(struct:expresion-final #(struct:clausula-final
+;  #(struct:lit #(struct:numero 7))))))
+
+(define expr-sat-2 ; (1 or -1) and 2
   (FNC 2
        (expresion-no-final
         (clausula-no-final
          (lit (numero 1))
-         ;(disyuncion (or ('or)))
          (clausula-final
           (lit (numero -1))))
-        ;(conjuncion (and))
         (expresion-final
          (clausula-final
           (lit (numero 2)))))))
 
+;Resultado:
+;#(struct:FNC 2 #(struct:expresion-no-final #(struct:clausula-no-final
+;#(struct:lit #(struct:numero 1)) #(struct:clausula-final #(struct:lit
+;#(struct:numero -1)))) #(struct:expresion-final #(struct:clausula-final
+;#(struct:lit #(struct:numero 2))))))
+
+(define expr-sat-3 ; 1 and 2 and (3 or 4)
+  (FNC 4
+       (expresion-no-final
+        (clausula-final
+         (lit (numero 1)))
+        (expresion-no-final
+         (clausula-final
+          (lit (numero 2)))
+         (expresion-final
+          (clausula-no-final
+           (lit (numero 3))
+           (clausula-final
+            (lit (numero 4)))))))))
+
+;Resultado:
+;#(struct:FNC 4 #(struct:expresion-no-final #(struct:clausula-final #(struct:lit
+;#(struct:numero 1))) #(struct:expresion-no-final #(struct:clausula-final
+;#(struct:lit #(struct:numero 2))) #(struct:expresion-final
+;#(struct:clausula-no-final #(struct:lit #(struct:numero 3))
+;#(struct:clausula-final #(struct:lit #(struct:numero 4))))))))
 
