@@ -542,9 +542,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Implementación con datatype
 
+;Implementación Gramatica BNF
+
+
+
+
+
+
+
+
 ;expresion-FNC
 ; Este tipo de dato recibe un numero de variable y una expresion, se encarga
 ; de crear una representación de una expresión SAT en FNC.
+;<FNC> ::= 'FNC <numero-variables> <expresion>
+;<numero-variables> ::= <int>
 (define-datatype expresion-FNC expresion-FNC?
   (FNC (numero-variables number?)(expr expresion?))
 )
@@ -556,6 +567,8 @@
 ; expresión final solamente recibe una clausula, por otra parte cuando es una
 ; expresión no final, ademas de una clausula, debe recibir otra expresión
 ; de forma recursiva.
+;<expresion> ::= <clausula> | <clausula> <conjuncion> <expresion>
+;<conjuncion> ::= 'and
 (define-datatype expresion expresion?
   (expresion-final (clausula clausula?))
   (expresion-no-final (clausula clausula?)
@@ -567,6 +580,8 @@
 ; clausula final recibe unicamente un literal, por otra parte cuando es una
 ; clausula no final, ademas de un literal, debe recibir otra clausula,
 ; de esta forma se ejecuta un llamdo recursivo.
+;<clausula> ::= <literal> | <literal> <disyunción> <clausula>
+;<disyunción> ::= 'or
 (define-datatype clausula clausula?
   (clausula-final (literal literal?))
   (clausula-no-final (literal literal?)
@@ -576,6 +591,7 @@
 ;literal
 ; Este datatype recibe una variable, con la cual puede representar
 ; abstractamente un literal.
+;<literal> ::= <variable>
 (define-datatype literal literal?
   (lit (variable variable?))
 )
@@ -583,6 +599,7 @@
 ;variable
 ; Este datatype crea una representación abstracta de una variable, recibiendo
 ; como entrada un número.
+;<variable> ::= <int>
 (define-datatype variable variable?
   (numero (num number?))
 )
@@ -640,4 +657,3 @@
 ;#(struct:lit #(struct:numero 2))) #(struct:expresion-final
 ;#(struct:clausula-no-final #(struct:lit #(struct:numero 3))
 ;#(struct:clausula-final #(struct:lit #(struct:numero 4))))))))
-
